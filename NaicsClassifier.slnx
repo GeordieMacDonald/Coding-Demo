@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="NaicsClassifier.Api/NaicsClassifier.Api.csproj" />
+  <Project Path="NaicsClassifier.Core/NaicsClassifier.Core.csproj" />
+  <Project Path="NaicsClassifier.Engine.Bert/NaicsClassifier.Engine.Bert.csproj" />
+  <Project Path="NaicsClassifier.Engine.FastText/NaicsClassifier.Engine.FastText.csproj" />
+  <Project Path="NaicsClassifier.Engine.TfIdf/NaicsClassifier.Engine.TfIdf.csproj" />
+  <Project Path="NaicsClassifier.Tests/NaicsClassifier.Tests.csproj" />
+</Solution>

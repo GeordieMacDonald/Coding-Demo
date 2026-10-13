@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\NaicsClassifier.Core\NaicsClassifier.Core.csproj" />
+    <ProjectReference Include="..\NaicsClassifier.Engine.TfIdf\NaicsClassifier.Engine.TfIdf.csproj" />
+    <ProjectReference Include="..\NaicsClassifier.Engine.FastText\NaicsClassifier.Engine.FastText.csproj" />
+    <ProjectReference Include="..\NaicsClassifier.Engine.Bert\NaicsClassifier.Engine.Bert.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>

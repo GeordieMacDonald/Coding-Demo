@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NAICS Classification Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #111827;
+      --card-border: #1f2937;
+      --card-hover: #1e293b;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent: #10b981;
+      --accent-muted: rgba(16, 185, 129, 0.15);
+      --badge-bg: #374151;
+      --badge-text: #e5e7eb;
+      --pill-bg: #1e293b;
+      --pill-border: #334155;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #fff;
+      font-size: 1.1rem;
+    }
+
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.85rem;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--pill-bg);
+      border: 1px solid var(--pill-border);
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    main {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .search-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.75rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+    }
+
+    .search-controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .select-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .select-group label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    select {
+      background: #1f2937;
+      color: var(--text);
+      border: 1px solid var(--pill-border);
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    select:focus {
+      border-color: var(--primary);
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .query-input {
+      flex: 1;
+      background: #1f2937;
+      border: 1px solid var(--pill-border);
+      color: var(--text);
+      font-size: 1.05rem;
+      padding: 0.85rem 1.25rem;
+      border-radius: 8px;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .query-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+    }
+
+    .btn-classify {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0 1.75rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .btn-classify:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-classify:active {
+      transform: translateY(0);
+    }
+
+    .sample-queries {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .sample-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .sample-pill {
+      background: var(--pill-bg);
+      border: 1px solid var(--pill-border);
+      color: #cbd5e1;
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .sample-pill:hover {
+      background: #334155;
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      padding: 0 0.5rem;
+    }
+
+    .results-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .candidate-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .candidate-card:hover {
+      border-color: #3b82f6;
+      background: var(--card-hover);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .code-title-group {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    .naics-code-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.25rem;
+      font-weight: 700;
+      background: #1e3a8a;
+      color: #bfdbfe;
+      padding: 0.35rem 0.85rem;
+      border-radius: 8px;
+      border: 1px solid #2563eb;
+    }
+
+    .naics-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .score-container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      min-width: 120px;
+    }
+
+    .confidence-percentage {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .raw-score {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .confidence-bar-bg {
+      width: 100%;
+      height: 6px;
+      background: #1f2937;
+      border-radius: 999px;
+      margin: 0.5rem 0 1rem 0;
+      overflow: hidden;
+    }
+
+    .confidence-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #10b981);
+      border-radius: 999px;
+      transition: width 0.4s ease-out;
+    }
+
+    .hierarchy-crumbs {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .crumb-badge {
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .explanation-box {
+      background: #1e293b;
+      border-left: 3px solid var(--primary);
+      padding: 0.6rem 0.9rem;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .matched-tags {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+
+    .term-tag {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #93c5fd;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .btn-detail {
+      background: transparent;
+      border: 1px solid var(--pill-border);
+      color: #cbd5e1;
+      font-size: 0.8rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-detail:hover {
+      background: #334155;
+      color: #fff;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+      background: var(--card-bg);
+      border: 1px dashed var(--card-border);
+      border-radius: 12px;
+    }
+
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.6;
+    }
+
+    .modal.modal-wide {
+      max-width: 950px;
+    }
+
+    .benchmark-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.6rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .benchmark-table th {
+      background: #1f2937;
+      color: #94a3b8;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+    }
+
+    .benchmark-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .badge-hit {
+      display: inline-block;
+      padding: 0.2rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.75rem;
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-top3 {
+      display: inline-block;
+      padding: 0.2rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.75rem;
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-miss {
+      display: inline-block;
+      padding: 0.2rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.75rem;
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .tradeoff-card {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .tradeoff-item {
+      background: #1e293b;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .tradeoff-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tradeoff-desc {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .modal {
+      background: #111827;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 750px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .modal-section-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+    }
+
+    .index-terms-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      max-height: 200px;
+      overflow-y: auto;
+      padding-right: 0.5rem;
+    }
+
+    .index-term-pill {
+      background: #1f2937;
+      border: 1px solid #374151;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      color: #e5e7eb;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <div class="brand">
+        <div class="brand-logo">N</div>
+        <div>
+          <div class="brand-title">NAICS Code Classification Engine</div>
+          <div class="brand-subtitle">Natural Language Industry Classifier (.NET 10)</div>
+        </div>
+      </div>
+      <div class="header-status">
+        <button id="btnOpenBenchmark" class="status-badge" style="cursor: pointer; background: #1e1b4b; border-color: #4338ca; color: #c7d2fe; font-weight: 500;">
+          <span>📊 Benchmark Suite</span>
+        </button>
+        <div class="status-badge">
+          <div class="status-dot"></div>
+          <span>308 4-Digit Industry Groups Ready</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="search-card">
+      <div class="search-controls">
+        <div class="select-group">
+          <label for="modelSelect">Algorithm</label>
+          <select id="modelSelect">
+            <option value="tfidf">TF-IDF (Microsoft.ML)</option>
+          </select>
+        </div>
+        <div class="select-group">
+          <label for="topKSelect">Top Candidates</label>
+          <select id="topKSelect">
+            <option value="3">Top 3</option>
+            <option value="5" selected>Top 5</option>
+            <option value="10">Top 10</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-wrapper">
+        <input 
+          type="text" 
+          id="queryInput" 
+          class="query-input" 
+          placeholder="Enter a business activity or company description (e.g., 'commercial roofing installation and siding repair')..."
+          autocomplete="off"
+        />
+        <button id="btnClassify" class="btn-classify">
+          <span id="btnText">Classify</span>
+        </button>
+      </div>
+
+      <div class="sample-queries">
+        <span class="sample-label">Quick samples:</span>
+        <button class="sample-pill" data-query="Custom software programming, SaaS development, and web application design">Custom Software / SaaS</button>
+        <button class="sample-pill" data-query="Commercial roofing contractor and siding repair">Roofing Contractor</button>
+        <button class="sample-pill" data-query="Poultry hatchery and chicken egg farming">Poultry & Eggs</button>
+        <button class="sample-pill" data-query="General dental practice, oral hygiene, and dentistry clinic">Dental Clinic</button>
+        <button class="sample-pill" data-query="Full service Italian restaurant and pizzeria">Italian Restaurant</button>
+        <button class="sample-pill" data-query="Corporate legal counseling and attorney services">Law Firm</button>
+        <button class="sample-pill" data-query="Plumbing, heating, and air conditioning contractor">Plumbing & HVAC</button>
+      </div>
+
+      <div class="sample-queries" style="margin-top: 0.6rem;">
+        <span class="sample-label" style="color: #a855f7; font-weight: 500;">🧠 Semantic / BERT Generalization:</span>
+        <button class="sample-pill" style="border-color: #9333ea;" data-query="litigation advocacy and legal representation in court">Semantic: Courtroom Litigation</button>
+        <button class="sample-pill" style="border-color: #9333ea;" data-query="oral cavity hygiene and dental crowns">Semantic: Oral Cavity Hygiene</button>
+        <button class="sample-pill" style="border-color: #9333ea;" data-query="water leak pipe repair and central air furnace maintenance">Semantic: Pipe Leak & Furnace</button>
+        <button class="sample-pill" style="border-color: #9333ea;" data-query="canine vaccination and companion animal wellness examinations">Semantic: Veterinary Clinic</button>
+      </div>
+
+      <div class="sample-queries" style="margin-top: 0.6rem;">
+        <span class="sample-label" style="color: #f59e0b; font-weight: 500;">⚡ Typo / Subword Tests:</span>
+        <button class="sample-pill" style="border-color: #d97706;" data-query="comercial roofin contrctor and sidng repare">Typo: Roofing Contractor</button>
+        <button class="sample-pill" style="border-color: #d97706;" data-query="sofware prgramming and saas developmnt">Typo: Software & SaaS</button>
+        <button class="sample-pill" style="border-color: #d97706;" data-query="plumbin and heatin hvac contrctor">Typo: Plumbing & HVAC</button>
+        <button class="sample-pill" style="border-color: #d97706;" data-query="famly resturant and pizza dinng">Typo: Restaurant Dining</button>
+      </div>
+    </div>
+
+    <div class="meta-bar" id="metaBar" style="display: none;">
+      <span id="metaQuery"></span>
+      <span id="metaPerformance"></span>
+    </div>
+
+    <div id="resultsGrid" class="results-grid">
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h3>Ready to Classify</h3>
+        <p>Type a business description or select one of the sample queries above to see top matching NAICS 4-digit codes.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Detail Modal -->
+  <div id="detailModal" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <span id="modalCode" class="naics-code-badge">5415</span>
+          <h3 id="modalTitle">Computer Systems Design</h3>
+        </div>
+        <button id="modalClose" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <div class="modal-section-title">Hierarchy</div>
+          <div id="modalHierarchy" class="hierarchy-crumbs"></div>
+        </div>
+        <div>
+          <div class="modal-section-title">Official Census Description</div>
+          <p id="modalDescription" style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.6;"></p>
+        </div>
+        <div>
+          <div class="modal-section-title">Sample Activities & Index Terms (<span id="modalTermCount">0</span>)</div>
+          <div id="modalTerms" class="index-terms-grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Benchmark Suite Modal -->
+  <div id="benchmarkModal" class="modal-backdrop">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <span class="naics-code-badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border-color: rgba(99, 102, 241, 0.4);">TEST SUITE</span>
+          <h3 style="margin: 0; font-size: 1.15rem;">Algorithmic Benchmark Evaluation Matrix</h3>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <button id="btnRunBenchmark" class="btn btn-primary" style="padding: 0.45rem 0.9rem; font-size: 0.85rem;">
+            <span id="btnRunBenchmarkText">▶ Run Evaluation</span>
+          </button>
+          <button id="benchmarkClose" class="modal-close">&times;</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div>
+          <div class="modal-section-title">Performance Scorecard (Live Test Run)</div>
+          <div id="benchmarkSummaryContainer">
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Click "Run Evaluation" above to execute all 22 test cases across TF-IDF, FastText, and BERT simultaneously.</p>
+          </div>
+        </div>
+
+        <div>
+          <div class="modal-section-title">Algorithmic Trade-Offs & Architecture</div>
+          <div class="tradeoff-card">
+            <div class="tradeoff-item">
+              <div class="tradeoff-title" style="color: #60a5fa;">📐 TF-IDF (Microsoft.ML)</div>
+              <div class="tradeoff-desc">
+                <strong>Latency:</strong> ~0.1-2 ms<br/>
+                <strong>Memory:</strong> ~4 MB<br/>
+                <strong>Strengths:</strong> Sub-millisecond speed, 100% token explainability, exact keyword matching.<br/>
+                <strong>Weakness:</strong> Brittle to spelling errors and vocabulary mismatch (synonyms).
+              </div>
+            </div>
+            <div class="tradeoff-item">
+              <div class="tradeoff-title" style="color: #34d399;">⚡ FastText (Char n-grams)</div>
+              <div class="tradeoff-desc">
+                <strong>Latency:</strong> ~0.4-3 ms<br/>
+                <strong>Memory:</strong> ~11 MB<br/>
+                <strong>Strengths:</strong> Exceptional typo and morphological resilience via subword hashes (lengths 3-5).<br/>
+                <strong>Weakness:</strong> Bag-of-ngrams loses word order and high-level conceptual context.
+              </div>
+            </div>
+            <div class="tradeoff-item">
+              <div class="tradeoff-title" style="color: #a78bfa;">🧠 BERT (Transformer INT8)</div>
+              <div class="tradeoff-desc">
+                <strong>Latency:</strong> ~15-35 ms<br/>
+                <strong>Memory:</strong> ~35 MB<br/>
+                <strong>Strengths:</strong> Deep semantic understanding, synonym generalization, MaxSim index matching.<br/>
+                <strong>Weakness:</strong> Higher CPU latency and memory footprint; requires neural inference.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="modal-section-title">Test Cases Breakdown (Click any row to test live)</div>
+          <div id="benchmarkCasesContainer">
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Benchmark cases will appear once the suite is run.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const queryInput = document.getElementById('queryInput');
+    const btnClassify = document.getElementById('btnClassify');
+    const btnText = document.getElementById('btnText');
+    const modelSelect = document.getElementById('modelSelect');
+    const topKSelect = document.getElementById('topKSelect');
+    const resultsGrid = document.getElementById('resultsGrid');
+    const metaBar = document.getElementById('metaBar');
+    const metaQuery = document.getElementById('metaQuery');
+    const metaPerformance = document.getElementById('metaPerformance');
+
+    const detailModal = document.getElementById('detailModal');
+    const modalClose = document.getElementById('modalClose');
+    const modalCode = document.getElementById('modalCode');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalHierarchy = document.getElementById('modalHierarchy');
+    const modalDescription = document.getElementById('modalDescription');
+    const modalTerms = document.getElementById('modalTerms');
+    const modalTermCount = document.getElementById('modalTermCount');
+
+    // Load available models on startup
+    async function loadModels() {
+      try {
+        const resp = await fetch('/api/models');
+        if (resp.ok) {
+          const models = await resp.json();
+          modelSelect.innerHTML = '';
+          models.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.key;
+            opt.textContent = m.name;
+            modelSelect.appendChild(opt);
+          });
+          const comp3Opt = document.createElement('option');
+          comp3Opt.value = 'compare3';
+          comp3Opt.textContent = '🌟 Tri-Model Comparison (TF-IDF vs FastText vs BERT)';
+          comp3Opt.selected = true; // Make Tri-Model default for demo
+          modelSelect.appendChild(comp3Opt);
+
+          const compOpt = document.createElement('option');
+          compOpt.value = 'compare';
+          compOpt.textContent = '⚡ Dual Comparison (TF-IDF vs FastText)';
+          modelSelect.appendChild(compOpt);
+        }
+      } catch (e) {
+        console.error("Could not load models", e);
+      }
+    }
+    loadModels();
+
+    // Sample pills
+    document.querySelectorAll('.sample-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        queryInput.value = btn.getAttribute('data-query');
+        classify();
+      });
+    });
+
+    queryInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') classify();
+    });
+
+    btnClassify.addEventListener('click', classify);
+
+    async function classify() {
+      const text = queryInput.value.trim();
+      if (!text) return;
+
+      btnClassify.disabled = true;
+      btnText.innerHTML = '<span class="spinner"></span> Classifying...';
+
+      try {
+        const topK = parseInt(topKSelect.value, 10);
+        const selectedModel = modelSelect.value;
+
+        if (selectedModel === 'compare3') {
+          const [respTfidf, respFt, respBert] = await Promise.all([
+            fetch('/api/classify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text, algorithm: 'tfidf', top_k: topK })
+            }),
+            fetch('/api/classify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text, algorithm: 'fasttext', top_k: topK })
+            }),
+            fetch('/api/classify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text, algorithm: 'bert', top_k: topK })
+            })
+          ]);
+
+          if (!respTfidf.ok || !respFt.ok || !respBert.ok) {
+            throw new Error('Tri-model query failed.');
+          }
+
+          const dataTfidf = await respTfidf.json();
+          const dataFt = await respFt.json();
+          const dataBert = await respBert.json();
+          renderTriComparison(dataTfidf, dataFt, dataBert);
+        } else if (selectedModel === 'compare') {
+          const [respTfidf, respFt] = await Promise.all([
+            fetch('/api/classify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text, algorithm: 'tfidf', top_k: topK })
+            }),
+            fetch('/api/classify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text, algorithm: 'fasttext', top_k: topK })
+            })
+          ]);
+
+          if (!respTfidf.ok || !respFt.ok) {
+            throw new Error('Comparison query failed.');
+          }
+
+          const dataTfidf = await respTfidf.json();
+          const dataFt = await respFt.json();
+          renderComparison(dataTfidf, dataFt);
+        } else {
+          const resp = await fetch('/api/classify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: text,
+              algorithm: selectedModel,
+              top_k: topK
+            })
+          });
+
+          if (!resp.ok) {
+            throw new Error('Classification failed: ' + resp.statusText);
+          }
+
+          const data = await resp.json();
+          renderResults(data);
+        }
+      } catch (err) {
+        resultsGrid.innerHTML = `
+          <div class="empty-state" style="border-color: #ef4444; color: #f87171;">
+            <div class="empty-icon">⚠️</div>
+            <h3>Classification Error</h3>
+            <p>${err.message}</p>
+          </div>
+        `;
+      } finally {
+        btnClassify.disabled = false;
+        btnText.textContent = 'Classify';
+      }
+    }
+
+    function renderTriComparison(tfidf, fasttext, bert) {
+      metaBar.style.display = 'flex';
+      metaQuery.innerHTML = `Tri-Model Comparison for <strong>"${escapeHtml(tfidf.query)}"</strong>`;
+      metaPerformance.innerHTML = `TF-IDF: <strong>${tfidf.elapsed_ms} ms</strong> &bull; FastText: <strong>${fasttext.elapsed_ms} ms</strong> &bull; BERT: <strong>${bert.elapsed_ms} ms</strong>`;
+
+      resultsGrid.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid #3b82f6;">
+              <div>
+                <h3 style="font-size: 1rem; color: #93c5fd;">📘 TF-IDF (Microsoft.ML)</h3>
+                <div style="font-size: 0.75rem; color: #94a3b8;">Exact words + Stemming</div>
+              </div>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">${tfidf.elapsed_ms} ms</span>
+            </div>
+            <div class="results-grid">
+              ${renderCandidateCards(tfidf.top_candidates, 'tfidf')}
+            </div>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid #10b981;">
+              <div>
+                <h3 style="font-size: 1rem; color: #6ee7b7;">⚡ FastText</h3>
+                <div style="font-size: 0.75rem; color: #94a3b8;">Subword n-grams (Typo-resilient)</div>
+              </div>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">${fasttext.elapsed_ms} ms</span>
+            </div>
+            <div class="results-grid">
+              ${renderCandidateCards(fasttext.top_candidates, 'fasttext')}
+            </div>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid #a855f7;">
+              <div>
+                <h3 style="font-size: 1rem; color: #d8b4fe;">🧠 BERT (Transformer)</h3>
+                <div style="font-size: 0.75rem; color: #94a3b8;">Dense 384-d semantic context</div>
+              </div>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">${bert.elapsed_ms} ms</span>
+            </div>
+            <div class="results-grid">
+              ${renderCandidateCards(bert.top_candidates, 'bert')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderComparison(tfidf, fasttext) {
+      metaBar.style.display = 'flex';
+      metaQuery.innerHTML = `Comparison for <strong>"${escapeHtml(tfidf.query)}"</strong>`;
+      metaPerformance.innerHTML = `TF-IDF: <strong>${tfidf.elapsed_ms} ms</strong> &bull; FastText: <strong>${fasttext.elapsed_ms} ms</strong>`;
+
+      resultsGrid.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid #3b82f6;">
+              <h3 style="font-size: 1rem; color: #93c5fd;">📘 TF-IDF (Microsoft.ML)</h3>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">${tfidf.elapsed_ms} ms</span>
+            </div>
+            <div class="results-grid">
+              ${renderCandidateCards(tfidf.top_candidates, 'tfidf')}
+            </div>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid #10b981;">
+              <h3 style="font-size: 1rem; color: #6ee7b7;">⚡ FastText (Subword Embeddings)</h3>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">${fasttext.elapsed_ms} ms</span>
+            </div>
+            <div class="results-grid">
+              ${renderCandidateCards(fasttext.top_candidates, 'fasttext')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderResults(data) {
+      metaBar.style.display = 'flex';
+      metaQuery.innerHTML = `Results for <strong>"${escapeHtml(data.query)}"</strong>`;
+      metaPerformance.innerHTML = `Model: <strong>${data.algorithm}</strong> &bull; Latency: <strong>${data.elapsed_ms} ms</strong>`;
+
+      if (!data.top_candidates || data.top_candidates.length === 0) {
+        resultsGrid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">❓</div>
+            <h3>No Matches Found</h3>
+            <p>Word-level vocabulary did not match the query terms. Try FastText or refine the query.</p>
+          </div>
+        `;
+        return;
+      }
+
+      resultsGrid.innerHTML = renderCandidateCards(data.top_candidates, 'single');
+    }
+
+    function renderCandidateCards(candidates, mode) {
+      if (!candidates || candidates.length === 0) {
+        return `
+          <div class="empty-state" style="padding: 2rem 1rem;">
+            <div class="empty-icon" style="font-size: 2rem; margin-bottom: 0.5rem;">❓</div>
+            <h4 style="font-size: 0.95rem;">No Matches Found</h4>
+            <p style="font-size: 0.8rem;">Vocabulary did not contain matching terms.</p>
+          </div>
+        `;
+      }
+
+      return candidates.map((c, idx) => {
+        const confPct = Math.round(c.confidence * 100);
+        const tagsHtml = (c.matched_terms || []).map(t => `<span class="term-tag">${escapeHtml(t)}</span>`).join('');
+
+        return `
+          <div class="candidate-card" style="padding: 1.15rem;">
+            <div class="card-top">
+              <div class="code-title-group">
+                <span class="naics-code-badge" style="font-size: 1.1rem; padding: 0.25rem 0.65rem;">${c.code}</span>
+                <div>
+                  <div class="naics-title" style="font-size: 1rem;">${escapeHtml(c.title)}</div>
+                  <div class="hierarchy-crumbs" style="font-size: 0.75rem;">
+                    <span class="crumb-badge">Sector ${c.sector_code}</span>
+                    <span>${escapeHtml(c.sector_title)}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="score-container" style="min-width: 90px;">
+                <div class="confidence-percentage" style="font-size: 1.1rem;">${confPct}%</div>
+                <div class="raw-score">Score: ${c.score.toFixed(3)}</div>
+              </div>
+            </div>
+
+            <div class="confidence-bar-bg" style="margin: 0.4rem 0 0.75rem 0;">
+              <div class="confidence-bar-fill" style="width: ${Math.max(confPct, 5)}%;"></div>
+            </div>
+
+            <div class="explanation-box" style="font-size: 0.8rem; padding: 0.5rem 0.75rem;">
+              <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                <span>${escapeHtml(c.explanation)}</span>
+                <div class="matched-tags">${tagsHtml}</div>
+              </div>
+              <button class="btn-detail" onclick="showDetail('${c.code}')">Details</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function showDetail(code) {
+      try {
+        const resp = await fetch(`/api/naics/${code}`);
+        if (!resp.ok) return;
+        const record = await resp.json();
+
+        modalCode.textContent = record.code;
+        modalTitle.textContent = record.title;
+        modalHierarchy.innerHTML = `
+          <span class="crumb-badge">Sector ${record.sector_code}</span>
+          <span>${escapeHtml(record.sector_title)}</span>
+          <span>&rsaquo;</span>
+          <span class="crumb-badge">Subsector ${record.subsector_code}</span>
+          <span>${escapeHtml(record.subsector_title)}</span>
+        `;
+        modalDescription.textContent = record.description || 'No official description text provided for this group.';
+        
+        modalTermCount.textContent = record.index_terms.length;
+        modalTerms.innerHTML = record.index_terms.map(t => `
+          <div class="index-term-pill">${escapeHtml(t)}</div>
+        `).join('');
+
+        detailModal.style.display = 'flex';
+      } catch (err) {
+        console.error("Failed to load details", err);
+      }
+    }
+
+    // Benchmark Suite Handlers
+    const btnOpenBenchmark = document.getElementById('btnOpenBenchmark');
+    const benchmarkModal = document.getElementById('benchmarkModal');
+    const benchmarkClose = document.getElementById('benchmarkClose');
+    const btnRunBenchmark = document.getElementById('btnRunBenchmark');
+    const btnRunBenchmarkText = document.getElementById('btnRunBenchmarkText');
+    const benchmarkSummaryContainer = document.getElementById('benchmarkSummaryContainer');
+    const benchmarkCasesContainer = document.getElementById('benchmarkCasesContainer');
+
+    btnOpenBenchmark.addEventListener('click', () => {
+      benchmarkModal.style.display = 'flex';
+      if (!benchmarkSummaryContainer.querySelector('table')) {
+        runBenchmarkSuite();
+      }
+    });
+
+    benchmarkClose.addEventListener('click', () => {
+      benchmarkModal.style.display = 'none';
+    });
+
+    window.addEventListener('click', (e) => {
+      if (e.target === benchmarkModal) {
+        benchmarkModal.style.display = 'none';
+      }
+    });
+
+    btnRunBenchmark.addEventListener('click', () => {
+      runBenchmarkSuite();
+    });
+
+    async function runBenchmarkSuite() {
+      btnRunBenchmark.disabled = true;
+      btnRunBenchmarkText.innerHTML = '<span class="spinner"></span> Running 22 Cases...';
+
+      try {
+        const resp = await fetch('/api/benchmark/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ top_k: 5 })
+        });
+
+        if (!resp.ok) {
+          throw new Error('Benchmark request failed');
+        }
+
+        const data = await resp.json();
+        renderBenchmarkResults(data);
+      } catch (err) {
+        console.error("Benchmark error:", err);
+        benchmarkSummaryContainer.innerHTML = `<p style="color: #ef4444;">Failed to run benchmark suite: ${escapeHtml(err.message)}</p>`;
+      } finally {
+        btnRunBenchmark.disabled = false;
+        btnRunBenchmarkText.textContent = '▶ Re-run Evaluation';
+      }
+    }
+
+    function renderBenchmarkResults(data) {
+      // Summary Scorecard Table
+      let summaryHtml = `
+        <table class="benchmark-table">
+          <thead>
+            <tr>
+              <th>Algorithm</th>
+              <th>Top-1 Accuracy</th>
+              <th>Top-3 Accuracy</th>
+              <th>Typo Resilience</th>
+              <th>Semantic Match</th>
+              <th>Avg Latency</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      data.models.forEach(m => {
+        const typoAcc = (m.category_accuracies && m.category_accuracies['Typo'] !== undefined) ? `${Math.round(m.category_accuracies['Typo'])}%` : 'N/A';
+        const semanticAcc = (m.category_accuracies && m.category_accuracies['Semantic'] !== undefined) ? `${Math.round(m.category_accuracies['Semantic'])}%` : 'N/A';
+        const top1Pct = `${Math.round(m.top1_accuracy)}% (${m.top1_hits}/${m.total_queries})`;
+        const top3Pct = `${Math.round(m.top3_accuracy)}% (${m.top3_hits}/${m.total_queries})`;
+
+        summaryHtml += `
+          <tr>
+            <td style="font-weight: 600; color: #f8fafc;">${escapeHtml(m.model_name)}</td>
+            <td><strong style="color: #10b981;">${top1Pct}</strong></td>
+            <td><strong style="color: #60a5fa;">${top3Pct}</strong></td>
+            <td>${typoAcc}</td>
+            <td>${semanticAcc}</td>
+            <td style="color: #cbd5e1;">${m.average_latency_ms.toFixed(2)} ms</td>
+          </tr>
+        `;
+      });
+
+      summaryHtml += `
+          </tbody>
+        </table>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+          Total Benchmark Cases: ${data.total_cases} &bull; Execution Platform: .NET 10 SIMD / ONNX INT8
+        </div>
+      `;
+      benchmarkSummaryContainer.innerHTML = summaryHtml;
+
+      // Cases Breakdown Table
+      let casesHtml = `
+        <table class="benchmark-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Query</th>
+              <th>Target NAICS</th>
+              <th style="text-align: center;">TF-IDF</th>
+              <th style="text-align: center;">FastText</th>
+              <th style="text-align: center;">BERT</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      (data.evaluations || []).forEach((c, idx) => {
+        const tfidfRes = c.results ? c.results['tfidf'] : null;
+        const fasttextRes = c.results ? c.results['fasttext'] : null;
+        const bertRes = c.results ? c.results['bert'] : null;
+
+        function badgeFor(res) {
+          if (!res) return `<span class="badge-miss">-</span>`;
+          if (res.is_top1) return `<span class="badge-hit">#1 Hit (${(res.confidence * 100).toFixed(0)}%)</span>`;
+          if (res.is_top3) return `<span class="badge-top3">Top-3 (${res.predicted_code})</span>`;
+          return `<span class="badge-miss">Miss (${res.predicted_code || '0'})</span>`;
+        }
+
+        casesHtml += `
+          <tr>
+            <td><span class="crumb-badge" style="font-size: 0.7rem;">${escapeHtml(c.case_info.category)}</span></td>
+            <td style="font-weight: 500; max-width: 260px; word-break: break-word;">"${escapeHtml(c.case_info.query)}"</td>
+            <td>
+              <span class="naics-code-badge" style="font-size: 0.75rem; padding: 0.15rem 0.4rem;">${escapeHtml(c.case_info.expected_code)}</span>
+              <span style="font-size: 0.75rem; color: #94a3b8; display: block;">${escapeHtml(c.case_info.expected_title)}</span>
+            </td>
+            <td style="text-align: center;">${badgeFor(tfidfRes)}</td>
+            <td style="text-align: center;">${badgeFor(fasttextRes)}</td>
+            <td style="text-align: center;">${badgeFor(bertRes)}</td>
+            <td>
+              <button class="btn btn-secondary btn-test-case" data-query="${escapeHtml(c.case_info.query)}" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">
+                Try &rarr;
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      casesHtml += `
+          </tbody>
+        </table>
+      `;
+      benchmarkCasesContainer.innerHTML = casesHtml;
+
+      // Attach click events to "Try" buttons
+      benchmarkCasesContainer.querySelectorAll('.btn-test-case').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const q = e.currentTarget.getAttribute('data-query');
+          queryInput.value = q;
+          benchmarkModal.style.display = 'none';
+          classify();
+        });
+      });
+    }
+
+    modalClose.addEventListener('click', () => {
+      detailModal.style.display = 'none';
+    });
+
+    window.addEventListener('click', (e) => {
+      if (e.target === detailModal) {
+        detailModal.style.display = 'none';
+      }
+    });
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text.replace(/&/g, '&amp;')
+                 .replace(/</g, '&lt;')
+                 .replace(/>/g, '&gt;')
+                 .replace(/"/g, '&quot;')
+                 .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
